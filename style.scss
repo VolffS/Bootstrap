@@ -1,0 +1,36 @@
+
+$enable-grid-classes: false;
+$enable-cssgrid: true;
+
+
+//table {
+//
+//  td:first-child >div {
+//    display: grid;
+//    column-gap: 5px;
+//    >* {
+//      margin: 0;
+//    }
+//    align-items: center;
+//    justify-items: center;
+//
+//    .table__avatar{
+//      height: 50px;
+//
+//      grid-area: A;
+//    }
+//    .table__name {
+//      grid-area: B;
+//      font-weight: bold;
+//    }
+//    .table__e-mail {
+//      grid-area: C;
+//      align-self:end;
+//    }
+//    /* ! */
+//    grid-template-areas:
+//    "A B "
+//    "A C ";
+//
+//  }
+//}
