@@ -67,30 +67,37 @@ function createInformationInRow(data) {
     return tableDataCell;
 }
 
-function createInformationStatusInRow(data) {
-    let tableDataCell = document.createElement("td");
-    let tableDataCellP;
-    switch (data) {
+function changeStatus(status) {
+    var classList;
+    switch (status) {
+
         case "active":
-            tableDataCellP = createElement("p","class", "m-0 badge  text-center rounded-pill bg-success-subtle text-success");
+            return classList = ["bg-success-subtle","text-success"];
             break;
 
         case "archive":
-            tableDataCellP = createElement("p","class", "m-0 badge  text-center rounded-pill text-bg-secondary ");
+            return classList = ["text-bg-secondary"];
             break;
 
         case "onboarding":
-            tableDataCellP = createElement("p","class", "m-0 badge  text-center rounded-pill bg-primary-subtle text-primary-emphasis");
+            return classList = ["bg-primary-subtle","text-primary-emphasis"];
             break;
 
         case "awaiting":
-            tableDataCellP = createElement("p","class", "m-0 badge  text-center rounded-pill bg-warning-subtle text-warning-emphasis");
+            return classList = ["bg-warning-subtle","text-warning-emphasis"];
             break;
 
         default :
-            tableDataCellP = createElement("p","class", "m-0 badge  text-center rounded-pill text-bg-secondary ");
+            return classList = ["text-bg-secondary"];
             break;
     }
+}
+
+function createInformationStatusInRow(data) {
+    let tableDataCell = document.createElement("td");
+    let tableDataCellP = createElement("p","class", "m-0 badge  text-center rounded-pill");
+
+    tableDataCellP.classList.add(...changeStatus(data));
 
     tableDataCellP.textContent = data[0].toUpperCase() + data.slice(1);
 
@@ -111,25 +118,19 @@ if (exampleModal) {
             modalBodyInputAllElement.addEventListener("input", (evt)=> checkIsValid(evt));
         }
 
-
-        const modalBodyInputFname = exampleModal.querySelector('.modal-body input#first-name');
-        const modalBodyInputLname = exampleModal.querySelector('.modal-body  input#last-name');
-        const modalBodyInputEmail = exampleModal.querySelector('.modal-body  input#email');
-        const modalBodyInputTitle = exampleModal.querySelector('.modal-body  input#title');
-        const modalBodyInputPhone = exampleModal.querySelector('.modal-body  input#phone');
-        const modalBodyInputStatus = exampleModal.querySelector('.modal-body  select#status');
-        const modalBodyInputPosition = exampleModal.querySelector('.modal-body  select#position');
-
         const btnAddEmployee = exampleModal.querySelector('.modal-footer  button.btn-primary');
         const btnClose = exampleModal.querySelector('.modal-footer  button.btn-secondary');
 
         btnAddEmployee.addEventListener("click", () =>{
 
+            var formData = new FormData(document.getElementById("addEmployee")) ;
+            var dateForm = Object.fromEntries(formData);
+
             if (checkAllInputFull(modalBodyInputAll)) {
-                console.log("Creat");
-                creatRowInTable(`${modalBodyInputFname.value} ${modalBodyInputLname.value}`,
-                    modalBodyInputEmail.value, modalBodyInputTitle.value, modalBodyInputPhone.value,
-                    modalBodyInputStatus.value, modalBodyInputPosition.value);
+
+                creatRowInTable(`${dateForm.firstName} ${dateForm.lastName}`,
+                    dateForm.email, dateForm.title, dateForm.phone,
+                    dateForm.status, dateForm.position);
                 for (const element of modalBodyInputAll) {
                     element.value="";
                     element.setAttribute("class","form-control");
@@ -143,16 +144,18 @@ if (exampleModal) {
 function checkIsValid(evt) {
 
     if (evt.target.value =="" ) {
-        evt.target.setAttribute("class","form-control is-invalid");
+        evt.target.classList.add("is-invalid");
+        evt.target.classList.remove("is-valid");
     } else {
-        evt.target.setAttribute("class","form-control is-valid");
+        evt.target.classList.add("is-valid");
+        evt.target.classList.remove("is-invalid");
     }
 }
 
 function checkAllInputFull(arr) {
     for (const element of arr) {
         if (!element.classList.contains("is-valid")) {
-            element.setAttribute("class","form-control is-invalid");
+            element.classList.replace("is-valid", "is-invalid");
             return false;
         }
     }
