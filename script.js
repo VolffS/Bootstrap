@@ -141,7 +141,6 @@ function modifyRow(element) {
     const email = rowValue[1].textContent;
     const role = rowValue[2].textContent;
     const phone = rowValue[3].textContent;
-    console.log(phone)
     const status = rowValue[4].textContent;
     const position = rowValue[5].textContent;
 
@@ -170,7 +169,7 @@ function modifyRow(element) {
     <td>
         ${createSelect("position", "Position", addSelectOptionSelected(arrOptionsPosition, position))}
     </td>
-    <td class="delete__checkBox"> <input type="checkbox"></td>
+    <td class="delete-checkBox"> <input type="checkbox"></td>
     <td> 
         <button type="button" class="btn btn-success btn-modifySuccess" id="btn-modifySuccess">
               <svg viewBox="0 0 16 16" width="16" height="16">
@@ -250,23 +249,23 @@ function successModify(employees, element) {
     }
 }
 
-function addSelectOption(Options) {
+function addSelectOption(options) {
 
     let listOptions = ``;
 
-    for (const Option of Options) {
-        listOptions += `<option value="${Option}">${formatFirstCharUp(Option)}</option>`;
+    for (const option of options) {
+        listOptions += `<option value="${option}">${formatFirstCharUp(option)}</option>`;
     }
 
     return listOptions;
 
 }
-function addSelectOptionSelected(Options, selectOption) {
+function addSelectOptionSelected(options, selectOption) {
 
     let listOptions = ``;
 
-    for (const Option of Options) {
-        listOptions += `<option value="${Option}" ${(Option === selectOption) ? 'selected' : ''}>${formatFirstCharUp(Option)}</option>`;
+    for (const option of options) {
+        listOptions += `<option value="${option}" ${(option === selectOption) ? 'selected' : ''}>${formatFirstCharUp(option)}</option>`;
     }
 
     return listOptions;
@@ -290,10 +289,12 @@ if (exampleModal) {
 
         const btnAddEmployee = exampleModal.querySelector('.modal-footer  button.btn-primary');
         const btnClose = exampleModal.querySelector('.modal-footer  button.btn-secondary');
+        let form = document.getElementById("addEmployee");
 
         btnAddEmployee.addEventListener("click", () => {
 
-            let formData = new FormData(document.getElementById("addEmployee"));
+
+            let formData = new FormData(form);
             let dateForm = Object.fromEntries(formData);
             dateForm["id"] = Math.floor(Math.random() * (2000 - 1000) + 1000);
             dateForm.phone = toPhone(dateForm.phone);
@@ -308,6 +309,9 @@ if (exampleModal) {
                 }
 
                 btnClose.click();
+            }
+            else {
+               form.classList.add("was-validated");
             }
         });
     });
@@ -489,11 +493,11 @@ function deleteRows(dataTable) {
     return dataTable;
 }
 
-function fillStatusSearch(OptionsStatus) {
+function fillStatusSearch(optionsStatus) {
 
     let dropdown = document.querySelector("thead div#sortStatus.dropdown-center ul.dropdown-menu");
 
-    for (const status of OptionsStatus) {
+    for (const status of optionsStatus) {
         dropdown.innerHTML += `
         <button class="dropdown-item" value="${status}" > ${formatFirstCharUp(status)} </button>`;
     }
