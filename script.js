@@ -1,46 +1,48 @@
 //var requestURL= "https://robohash.org/John Doe?set=set4";
 let requestURLTable= "http://www.filltext.com/?rows=32&id={number|1000}&firstName={firstName}&lastName={lastName}&email={email}&phone={phone|(xxx)xxx-xx-xx}&address={addressObject}&description={lorem|32}&position=[\"junior\",\"middle\",\"senior\"]&status=[\"archive\",\"onboarding\",\"active\",\"awaiting\"]&role=[\"Engineer\", \"Designer\", \"Product Manager\", \"System Analytic\",\"Consultant\"]&salary={numberLength|3}";
-let dataTable = [];
-let selectRows = [];
+
 let arrOptionsStatus = ["active", "onboarding", "awaiting", "archive"];
 let arrOptionsPosition = ["senior", "junior", "middle"];
-let filterSelectStatus ="";
-let sortTableName ="";
+
+let dataTable = {
+    rows: [],
+    selectRowsId: [],
+    filterParams : {
+        search: "",
+        status: ""
+    },
+    sortParams : ""
+};
 
 
 fetch(requestURLTable)
     .then(response => response.json())
     .then( arrRow=> {
-        dataTable = arrRow;
-        refreshTable(dataTable);
-        fillStatusSearch();
+        dataTable.rows = arrRow;
+        redrawTable(dataTable.rows);
+        fillStatusSearch(arrOptionsStatus);
         addEventsSortName();
     });
 
-function refreshTable(arrRow) {
+function redrawTable(rows) {
     const table = document.querySelector("tbody");
 
     table.textContent="";
 
-    if  (arrRow[0].row === undefined) {
+    for (const element of rows) {
 
-        let idRow = 0;
-
-        for (const arrRowElement of arrRow) {
-
-            createRowInTablePattern(idRow,`${arrRowElement.firstName} ${arrRowElement.lastName}`,arrRowElement.email,
-                arrRowElement.role, arrRowElement.phone, arrRowElement.status, arrRowElement.position);
-
-            idRow++;
-        }
-    } else {
-        for (const element of arrRow) {
-
-            createRowInTablePattern(element.id,`${element.row.firstName} ${element.row.lastName}`,element.row.email,
-                element.row.role, element.row.phone, element.row.status, element.row.position);
-        }
+        createRowInTablePattern(element);
     }
 
+}
+
+function updateTable(dataTable) {
+
+    let rows = dataTable.rows.slice();
+    let filteredRows = filterRows(rows, dataTable.filterParams);
+    let sortedRows = sortRows(filteredRows, dataTable.sortParams);
+
+    redrawTable(sortedRows);
 }
 
 function refreshEventInModifyCell(row) {
@@ -52,39 +54,44 @@ function refreshEventInModifyCell(row) {
     });
 
     checkBoxRow.addEventListener("change", (ev)=>{
-        selectRows = addSelectRow(selectRows ,ev.target);
+        dataTable.selectRowsId = addSelectRow(dataTable.selectRowsId, ev.target);
     });
 }
 
+function createRowInTablePattern(employee) {
+    const table = document.querySelector("tbody");
 
-function createDocHTMLPattern(id, name, email,title,phone,status, position) {
+    table.appendChild(createDocHTMLPattern(employee));
+}
 
-    let patternHtml = createElement("tr", "id", id);
-    patternHtml.innerHTML = createCellsTable( name, email,title,phone,status, position);
+function createDocHTMLPattern(employee) {
+
+    let patternHtml = createElement("tr", "id", employee.id);
+    patternHtml.innerHTML = createCellsTable(employee);
 
     refreshEventInModifyCell(patternHtml);
 
     return patternHtml;
 }
 
-function createCellsTable( name, email,title,phone,status, position) {
-    let cells = `
+function createCellsTable(employee) {
+    return `
         <td>
             <div class="d-flex flex-row align-items-center gap-2 ">
                 <img class="rounded-circle border border-secondary-subtle" 
-                src="https://robohash.org/${name}?set=set4" 
+                src="https://robohash.org/${employee.firstName} ${employee.lastName}?set=set4" 
                 alt="" style="height: 50px;">
                 <div class="d-flex flex-column ">
-                    <dt>${name}</dt>
-                    <p class="m-0" >${email}</p>
+                    <dt>${employee.firstName} ${employee.lastName}</dt>
+                    <p class="m-0" >${employee.email}</p>
                 </div>
             </div>
         </td>
-        <td> <p class="m-0">${title}</p></td>
-        <td> <p class="m-0">${phone}</p></td>
-        <td> <p class="m-0 badge  text-center rounded-pill ${changeStatus(status).join(" ")}" >${formatFirstCharUp(status)}</p></td>
-        <td> <p class="m-0 " >${formatFirstCharUp(position)}</p></td>
-        <td class="delete__checkBox"> <input type="checkbox"></td>
+        <td> <p class="m-0">${employee.role}</p></td>
+        <td> <p class="m-0">${employee.phone}</p></td>
+        <td> <p class="m-0 badge  text-center rounded-pill ${changeStatus(employee.status).join(" ")}" >${formatFirstCharUp(employee.status)}</p></td>
+        <td> <p class="m-0 " >${formatFirstCharUp(employee.position)}</p></td>
+        <td class="delete-checkBox"> <input type="checkbox"></td>
         <td> 
             <button type="button" class="btn btn-outline-primary btn-modify">
               <svg viewBox="0 0 16 16" width="16" height="16">
@@ -93,116 +100,120 @@ function createCellsTable( name, email,title,phone,status, position) {
             </button>
         </td>
     `;
-    return cells;
-}
-
-function createRowInTablePattern(id, name, email,title,phone,status, position) {
-    const table = document.querySelector("tbody");
-
-    table.appendChild(createDocHTMLPattern(id, name, email,title,phone,status, position));
 }
 
 function createInput(name, label, value) {
-    let input = `
+    return `
         <div class="mb-1 form-floating">
             <input type="text" class="form-control " id="${name}" name="${name}" placeholder="" value="${value}" required>
             <label for="${name}" class="col-form-label">${label}</label>                        
         </div>`;
-
-    return input;
 }
 
 function createInputPhone(name, label, value) {
-    let input = `
+    return `
         <div class="mb-1 form-floating">
             <input type="text" class="form-control " id="${name}" name="${name}" 
             maxlength="10" pattern="[0-9]{10}" placeholder="(454)328-2495" value="${value}" required>
             <label for="${name}" class="col-form-label">${label}</label>                        
         </div>`;
-
-    return input;
 }
 
 function createSelect(name, label, value) {
-    let select = `
+    return `
         <div class="mb-1 form-floating">
             <select class="form-select" id="${name}" name="${name}">
                 ${value}
             </select>
             <label for="${name}" class="col-form-label">${label}</label>
         </div>`;
-
-    return select;
 }
 
 function modifyRow(element) {
 
-        let elementRow = findParentRow(element);
+    let elementRow = findParentRow(element);
 
-        elementRow.classList.add("was-validated");
+    elementRow.classList.add("was-validated");
 
-        elementRow.innerHTML = `        
-        <td>
-            <div class="d-flex flex-row align-items-center gap-2 ">
-                <img class="rounded-circle border border-secondary-subtle" 
-                src="https://robohash.org/${name}?set=set4" 
-                alt="" style="height: 50px;">
-                <div class="d-flex flex-column ">
-                    ${createInput("firstName", "Имя", dataTable[elementRow.id].firstName)}
-                    ${createInput("lastName", "Фамилия", dataTable[elementRow.id].lastName)}
-                    ${createInput("email", "Email", dataTable[elementRow.id].email)}                                                       
-                </div>
+    const rowValue = elementRow.querySelectorAll("p, dt");
+
+    const name = rowValue[0].textContent.split(" ");
+    const email = rowValue[1].textContent;
+    const role = rowValue[2].textContent;
+    const phone = rowValue[3].textContent;
+    console.log(phone)
+    const status = rowValue[4].textContent;
+    const position = rowValue[5].textContent;
+
+    elementRow.innerHTML = `        
+    <td>
+        <div class="d-flex flex-row align-items-center gap-2 ">
+            <img class="rounded-circle border border-secondary-subtle" 
+            src="https://robohash.org/${name.join(" ")}?set=set4" 
+            alt="" style="height: 50px;">
+            <div class="d-flex flex-column ">
+                ${createInput("firstName", "Имя", name[0])}
+                ${createInput("lastName", "Фамилия", name[1])}
+                ${createInput("email", "Email", email)}                                                       
             </div>
-        </td>
-        <td> 
-            ${createInput("role", "Должность", dataTable[elementRow.id].role)}
-        </td>
-        <td> 
-            ${createInputPhone("phone", "Phone", phoneToNumer(dataTable[elementRow.id].phone))}
-        </td>
-        <td>
-            ${createSelect("status", "Status", addSelectOption(arrOptionsStatus, dataTable[elementRow.id].status))}
-        </td>
-        <td>
-            ${createSelect("position", "Position", addSelectOption(arrOptionsPosition, dataTable[elementRow.id].position))}
-        </td>
-        <td class="delete__checkBox"> <input type="checkbox"></td>
-        <td> 
-            <button type="button" class="btn btn-success btn-modifySuccess" id="btn-modifySuccess">
-                  <svg viewBox="0 0 16 16" width="16" height="16">
-                    <use xlink:href="#changeFieldSuccess"></use>
-                 </svg>          
-              </button>
-              <button type="button" class="btn btn-outline-danger btn-modifyCancel" id="btn-modifyCancel">
-                 <svg viewBox="0 0 16 16" width="16" height="16" >
-                    <use xlink:href="#changeFieldCansel"></use>
-                 </svg>                 
-              </button>
-        </td>` ;
+        </div>
+    </td>
+    <td> 
+        ${createInput("role", "Должность", role)}
+    </td>
+    <td> 
+        ${createInputPhone("phone", "Phone", phoneToNumber(phone))}
+    </td>
+    <td>
+        ${createSelect("status", "Status", addSelectOptionSelected(arrOptionsStatus, status))}
+    </td>
+    <td>
+        ${createSelect("position", "Position", addSelectOptionSelected(arrOptionsPosition, position))}
+    </td>
+    <td class="delete__checkBox"> <input type="checkbox"></td>
+    <td> 
+        <button type="button" class="btn btn-success btn-modifySuccess" id="btn-modifySuccess">
+              <svg viewBox="0 0 16 16" width="16" height="16">
+                <use xlink:href="#changeFieldSuccess"></use>
+             </svg>          
+          </button>
+          <button type="button" class="btn btn-outline-danger btn-modifyCancel" id="btn-modifyCancel">
+             <svg viewBox="0 0 16 16" width="16" height="16" >
+                <use xlink:href="#changeFieldCansel"></use>
+             </svg>                 
+          </button>
+    </td>` ;
 
-        const btnCanselModify = elementRow.getElementsByClassName("btn-modifyCancel")[0];
-        const btnModifySuccess = elementRow.getElementsByClassName("btn-modifySuccess")[0];
+    const btnCanselModify = elementRow.getElementsByClassName("btn-modifyCancel")[0];
+    const btnModifySuccess = elementRow.getElementsByClassName("btn-modifySuccess")[0];
 
-        btnCanselModify.addEventListener("click", (ev)=> {
-            canselModify(ev.target);
-        })
+    btnCanselModify.addEventListener("click", (ev)=> {
+        canselModify(dataTable.rows, ev.target);
+    })
 
-        btnModifySuccess.addEventListener("click", (ev)=> {
-            successModify(ev.target)
-        })
-};
+    btnModifySuccess.addEventListener("click", (ev)=> {
 
-function canselModify(element) {
+        let newRows = successModify(dataTable.rows, ev.target);
+
+        dataTable.rows = newRows.employees;
+    })
+}
+
+function canselModify(employees, element) {
 
     let row = findParentRow(element);
 
-    row.innerHTML = createCellsTable( `${dataTable[row.id].firstName} ${dataTable[row.id].lastName}`,dataTable[row.id].email,
-        dataTable[row.id].role, dataTable[row.id].phone, dataTable[row.id].status, dataTable[row.id].position);
+    employees.find((value)=>{
+        if (value.id.toString() === row.id) {
 
+            row.innerHTML = createCellsTable(value);
+        }
+    })
+    
     refreshEventInModifyCell(row);
-};
+}
 
-function successModify(element) {
+function successModify(employees, element) {
 
     let row = findParentRow(element);
 
@@ -210,143 +221,61 @@ function successModify(element) {
 
     if (checkAllInputFull(InputAll)) {
         let allValues = row.querySelectorAll("input, select");
-        let employees = new Object();
+        let employee = {
+            id: row.id,
+        };
 
         for (const inputElement of allValues) {
-            employees[inputElement.name] = inputElement.value;
+            employee[inputElement.name] = inputElement.value;
         }
+        employee.phone = toPhone(employee.phone);
 
-        row.innerHTML = createCellsTable( `${employees.firstName} ${employees.lastName}`,employees.email,
-            employees.role, employees.phone = toPhone(employees.phone), employees.status, employees.position);
+        row.innerHTML = createCellsTable(employee);
 
         refreshEventInModifyCell(row);
 
-        dataTable[row.id] = employees;
-
-        return true;
-    };
-    return false;
-};
-
-function redrawingFieldById(id, employees) {
-    let row = document.getElementById(id);
-
-    row.innerHTML = createCellsTable( `${employees.firstName} ${employees.lastName}`,employees.email,
-        employees.role, employees.phone = toPhone(employees.phone), employees.status, employees.position);
-
-    refreshEventInModifyCell(row);
+        for (let i=0; i<employees.length; i++) {
+            if (employees[i].id === employee.id) {
+                employees[i] = employee;
+                return {
+                    employees: employees,
+                    status: true,
+                }
+            }
+        }
+    }
+    return {
+        employees: employees,
+        status: false,
+    }
 }
 
-function addSelectOption(arrOption) {
+function addSelectOption(Options) {
 
     let listOptions = ``;
 
-    for (const arrOptionElement of arrOption) {
-        listOptions += `<option value="${arrOptionElement}">${formatFirstCharUp(arrOptionElement)}</option>`;
-    };
+    for (const Option of Options) {
+        listOptions += `<option value="${Option}">${formatFirstCharUp(Option)}</option>`;
+    }
 
     return listOptions;
 
-};
-function addSelectOption(arrOption, selectOption) {
+}
+function addSelectOptionSelected(Options, selectOption) {
 
     let listOptions = ``;
 
-    for (const arrOptionElement of arrOption) {
-        if (arrOptionElement === selectOption) {
-            listOptions += `<option value="${arrOptionElement}" selected>${formatFirstCharUp(arrOptionElement)}</option>`;
-        } else {
-            listOptions += `<option value="${arrOptionElement}">${formatFirstCharUp(arrOptionElement)}</option>`;
-        };
-    };
+    for (const Option of Options) {
+        listOptions += `<option value="${Option}" ${(Option === selectOption) ? 'selected' : ''}>${formatFirstCharUp(Option)}</option>`;
+    }
 
     return listOptions;
-
-};
-
-function creatRowInTable(id, name, email,title,phone,status, position) {
-    const table = document.querySelector("tbody");
-    const row = createElement("tr", "id", id);
-    const nameRow = createNameRow(name,email);
-    const titleRow = createInformationInRow(title);
-    const phoneRow = createInformationInRow(phone);
-    const statusRow = createInformationStatusInRow(status);
-    const positionRow = createInformationInRow(position);
-
-    let tableDataCell = createElement("td","class", "delete__checkBox");
-    const checkBoxRow = createElement("input","type", "checkbox");
-
-    tableDataCell.appendChild(checkBoxRow);
-
-    table.appendChild(row);
-    row.appendChild(nameRow);
-    row.appendChild(titleRow);
-    row.appendChild(phoneRow);
-    row.appendChild(statusRow);
-    row.appendChild(positionRow);
-    row.appendChild(tableDataCell);
-    row.innerHTML+= `
-    <td>
-        <button type="button" class="btn btn-outline-primary btn-modify">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
-            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"></path>
-          </svg>          
-        </button>
-    </td>
-    `;
-    refreshEventInModifyCell(row);
-
 }
 
 function createElement(nodeName, attributeName , attributeValue) {
     let elementHtml = document.createElement(nodeName);
     elementHtml.setAttribute(attributeName,attributeValue);
     return elementHtml;
-}
-
-function createNameRow(name, email) {
-    const nameRow = document.createElement("td");
-    const nameRowConteiner = createElement("div","class", "d-flex flex-row align-items-center gap-2");
-    const nameRowConteinerText = createElement("div","class", "d-flex flex-column");
-    const nameRowImg = createElement("img","style", "height: 50px;");
-    nameRowImg.classList.add("rounded-circle", "border", "border-secondary-subtle");
-    const nameRowName = document.createElement("dt");
-    const nameRowEmail = createElement("p","class", "m-0");
-
-    nameRowImg.src= `https://robohash.org/${name}?set=set4`;
-    nameRowName.textContent = name;
-    nameRowEmail.textContent = email;
-
-    nameRow.appendChild(nameRowConteiner);
-    nameRowConteiner.appendChild(nameRowImg);
-    nameRowConteiner.appendChild(nameRowConteinerText);
-    nameRowConteinerText.appendChild(nameRowName);
-    nameRowConteinerText.appendChild(nameRowEmail);
-
-    return nameRow;
-}
-
-function createInformationInRow(data) {
-    let tableDataCell = document.createElement("td");
-    let tableDataCellP = createElement("p","class", "m-0");
-
-    tableDataCellP.textContent = data;
-
-    tableDataCell.appendChild(tableDataCellP)
-    return tableDataCell;
-}
-
-function createInformationStatusInRow(data) {
-    let tableDataCell = document.createElement("td");
-    let tableDataCellP = createElement("p","class", "m-0 badge  text-center rounded-pill");
-
-    tableDataCellP.classList.add(...changeStatus(data));
-
-    tableDataCellP.textContent = data[0].toUpperCase() + data.slice(1);
-
-    tableDataCell.appendChild(tableDataCellP)
-
-    return tableDataCell;
 }
 
 const exampleModal = document.getElementById('exampleModal');
@@ -366,22 +295,23 @@ if (exampleModal) {
 
             let formData = new FormData(document.getElementById("addEmployee"));
             let dateForm = Object.fromEntries(formData);
+            dateForm["id"] = Math.floor(Math.random() * (2000 - 1000) + 1000);
+            dateForm.phone = toPhone(dateForm.phone);
 
             if (checkAllInputFull(modalBodyInputAll)) {
 
-                dataTable.push(dateForm);
-                findFieldInTable();
+                dataTable.rows.push(dateForm);
+                updateTable(dataTable);
 
                 for (const element of modalBodyInputAll) {
                     element.value="";
                 }
-                btnClose.click();
 
+                btnClose.click();
             }
         });
-
     });
-};
+}
 
 function changeStatus(status) {
 
@@ -389,23 +319,18 @@ function changeStatus(status) {
 
         case "active":
             return  ["bg-success-subtle","text-success"];
-            break;
 
         case "archive":
             return ["text-bg-secondary"];
-            break;
 
         case "onboarding":
             return ["bg-primary-subtle","text-primary-emphasis"];
-            break;
 
         case "awaiting":
             return ["bg-warning-subtle","text-warning-emphasis"];
-            break;
 
         default :
             return ["text-bg-secondary"];
-            break;
     }
 }
 
@@ -429,102 +354,60 @@ function checkAllInputFull(arr) {
         }
     }
     return true;
-};
+}
 
 const inputRequiredValue = document.getElementById("findRow");
-inputRequiredValue.addEventListener("input", findFieldInTable);
+inputRequiredValue.addEventListener("input", (ev)=>{
+    dataTable.filterParams.search = ev.target.value;
+    updateTable(dataTable);
+});
 
-function findFieldInTable() {
+function filterRows(rows, filterParams) {
 
-    let newDataTable = findField(dataTable, inputRequiredValue.value, filterSelectStatus, sortTableName);
+    let filteredRows = rows;
 
-    refreshTable(newDataTable);
+    if (filterParams.search !== "") {
 
+        filteredRows = filteredRows.filter((element) => {
+
+            return (employeeIncludes(element,filterParams.search.toLowerCase()))
+        });
+    }
+
+    if (filterParams.status !== "") {
+
+        filteredRows = filteredRows.filter((element) => {
+
+           return  (element.status.toLowerCase() === filterParams.status)
+        });
+    }
+
+    return filteredRows;
 }
-function findField(dataTable, searchWord, searchStatus, ascendingDescending) {
 
-    let requiredValue = searchWord.toLowerCase();
-    let sortedDataTable = dataTable;
-    let requiredRows = [];
-    let tempRequiredRows = [];
-    if (searchWord.value !== "") {
+function sortRows(rows, sortParams) {
 
-        sortedDataTable = sortedDataTable.filter((element, index) => {
-            if (element.firstName.toLowerCase().includes(requiredValue) ||
-                element.lastName.toLowerCase().includes(requiredValue) ||
-                element.email.toLowerCase().includes(requiredValue) ||
-                element.role.toLowerCase().includes(requiredValue) ||
-                element.phone.toLowerCase().includes(requiredValue) ||
-                element.status.toLowerCase().includes(requiredValue) ||
-                element.position.toLowerCase().includes(requiredValue)) {
+    let sortRows = rows;
 
-                let trueField = new Object();
-                trueField["id"] = index;
-                trueField["row"] = element;
+    if (sortParams !== "") {
 
-                tempRequiredRows.push(trueField);
-                return true;
-            } else {
-                return false;
-            }
-        });
+        sortRows.sort((a, b) => a.firstName.localeCompare(b.firstName));
 
-        requiredRows = tempRequiredRows;
-    };
-
-    tempRequiredRows = [];
-
-    if (searchStatus !== "") {
-
-        sortedDataTable = sortedDataTable.filter((element, index) => {
-            if (requiredRows.length !== 0) {
-                for (const requiredRow of requiredRows) {
-                    if (element.status.toLowerCase().includes(searchStatus) &&
-                        requiredRow.row.status === element.status.toLowerCase()) {
-
-                        let trueField = new Object();
-                        trueField["id"] = index;
-                        trueField["row"] = element;
-
-                        tempRequiredRows.push(trueField);
-                        return true
-                    }
-                }
-                return false;
-
-            } else  {
-                if (element.status.toLowerCase().includes(searchStatus)) {
-
-                    let trueField = new Object();
-                    trueField["id"] = index;
-                    trueField["row"] = element;
-
-                    tempRequiredRows.push(trueField);
-
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        });
-        requiredRows = tempRequiredRows;
-
-    }
-
-    if (ascendingDescending !== "") {
-        if (requiredRows.length !==0) {
-            requiredRows.sort((a, b) => a.row.firstName.localeCompare(b.row.firstName));
-        } else  {
-            requiredRows = sortedDataTable.sort((a, b) => a.firstName.localeCompare(b.firstName));
+        if (sortParams === "descending") {
+            sortRows.reverse();
         }
-
-        if (ascendingDescending === "descending") {
-            requiredRows.reverse();
-        }
-
     }
+    return sortRows ;
+}
 
-    return requiredRows;
+function employeeIncludes(employee, parameter) {
+    return (employee.firstName.toLowerCase().includes(parameter) ||
+        employee.lastName.toLowerCase().includes(parameter) ||
+        employee.email.toLowerCase().includes(parameter) ||
+        employee.role.toLowerCase().includes(parameter) ||
+        employee.phone.toLowerCase().includes(parameter) ||
+        employee.status.toLowerCase().includes(parameter) ||
+        employee.position.toLowerCase().includes(parameter))
 }
 
 function findParentRow(elementRow) {
@@ -542,69 +425,75 @@ function toPhone(phone) {
     phone = `(${phone.slice(0,3)})${phone.slice(3,6)}-${phone.slice(6)}`
     return phone;
 }
-function phoneToNumer(phone) {
+function phoneToNumber(phone) {
     phone = `${phone.slice(1,4)}${phone.slice(5,8)}${phone.slice(9)}`
     return phone;
 }
 
-function addSelectRow(arrRows, element) {
+function addSelectRow(rows, element) {
 
     if (element.checked){
-        arrRows.push(findParentRow(element).id);
+        rows.push(findParentRow(element).id);
     } else {
-        for (let i = 0; i<arrRows.length; i++) {
-            if (arrRows[i] === findParentRow(element).id ) {
-                arrRows.splice(i,1);
-            };
-        };
-    };
-    return arrRows;
-};
+        for (let i = 0; i<rows.length; i++) {
+            if (rows[i] === findParentRow(element).id ) {
+                rows.splice(i,1);
+            }
+        }
+    }
+    return rows;
+}
 
-const btnDelete = document.getElementById("delete__Row");
+const btnDelete = document.getElementById("delete-row");
 const btnSubmitDelete = document.getElementById("deleteSubmit");
-const btnCancelDelete = document.getElementById("deleteCansel");
+const btnCancelDelete = document.getElementById("deleteCancel");
 
 btnDelete.addEventListener("click", () => {
-    changeStyleCSS('.delete__checkBox', 'display', '');
+    changeStyleCSS('.delete-checkBox', 'display', '');
 });
 
 btnCancelDelete.addEventListener("click", () => {
-    for (const selectRowElement of selectRows) {
-        let selectCheckBox = document.getElementById(selectRowElement).querySelector( "input[type='checkbox']");
+    for (const id of dataTable.selectRowsId) {
+        let selectCheckBox = document.getElementById(id).querySelector( "input[type='checkbox']");
         selectCheckBox.checked = !selectCheckBox.checked;
     }
-    selectRows = [];
+    dataTable.selectRowsId = [];
 
-    changeStyleCSS('.delete__checkBox', 'display', 'none');
+    changeStyleCSS('.delete-checkBox', 'display', 'none');
 });
 
 btnSubmitDelete.addEventListener("click", () => {
 
-    dataTable = deleteRows(dataTable, selectRows);
+    dataTable = deleteRows(dataTable);
 
-    findFieldInTable();;
+    updateTable(dataTable);
 
-    selectRows = []
     btnCancelDelete.click();
 })
 
-function deleteRows(dataTable, selectRows) {
+function deleteRows(dataTable) {
 
-    selectRows.sort(function (a, b) {
-        return a - b;
-    });
+    for (let i = 0; i < dataTable.rows.length; i++) {
 
-    for (const element of selectRows.reverse()) {
-        dataTable.splice(element,1);
+        for (const id of dataTable.selectRowsId) {
+
+            if (dataTable.rows[i].id.toString() === id) {
+
+                dataTable.rows.splice(i,1);
+            }
+        }
     }
+
+    dataTable.selectRowsId = [];
+
     return dataTable;
 }
 
-function fillStatusSearch() {
+function fillStatusSearch(OptionsStatus) {
+
     let dropdown = document.querySelector("thead div#sortStatus.dropdown-center ul.dropdown-menu");
 
-    for (const status of arrOptionsStatus) {
+    for (const status of OptionsStatus) {
         dropdown.innerHTML += `
         <button class="dropdown-item" value="${status}" > ${formatFirstCharUp(status)} </button>`;
     }
@@ -613,8 +502,8 @@ function fillStatusSearch() {
 
     for (const btnSortElement of btnSort) {
         btnSortElement.addEventListener("click", (ev)=>{
-            filterSelectStatus = ev.target.value;
-            findFieldInTable();
+            dataTable.filterParams.status = ev.target.value;
+            updateTable(dataTable);
         })
     }
 }
@@ -623,12 +512,11 @@ function addEventsSortName() {
 
     let dropdown = document.querySelectorAll("thead div#sortName.dropdown-center ul.dropdown-menu button");
 
-    for (const dropdownElement of dropdown) {
-        dropdownElement.addEventListener("click", (ev)=>{
-            sortTableName = ev.target.value;
-            findFieldInTable();
+    for (const dropdownBtn of dropdown) {
+        dropdownBtn.addEventListener("click", (ev)=>{
+            dataTable.sortParams = ev.target.value;
+            updateTable(dataTable);
         })
     }
-
-
 }
+
