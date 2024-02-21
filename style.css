@@ -1,3 +1,9 @@
+.delete-checkBox {
+  display: none;
+}
 
+.btn-modify {
+  opacity: 1;
+}
 
 /*# sourceMappingURL=style.css.map */
